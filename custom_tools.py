@@ -57,7 +57,7 @@ transaction_history = [
     { "date": "1/22/24", "amount": "$127.37", "location": "Best Buy", "category": "technology" },
 ]
 
-weather = [ { "temp": "49", "condition": "sunny" } ] # [ { "temp": "72", "condition": "sunny" }, { "temp": "48", "condition": "snowy" }, { "temp": "80", "condition": "raining" } ]
+weather = [ { "temp": "58", "condition": "sunny" } ] # [ { "temp": "72", "condition": "sunny" }, { "temp": "48", "condition": "snowy" }, { "temp": "80", "condition": "raining" } ]
 
 def make_tool( fn, name, description ) -> FunctionTool:
     return FunctionTool.from_defaults( fn = fn, name = name, description = description )
