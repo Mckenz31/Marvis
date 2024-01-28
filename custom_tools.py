@@ -21,8 +21,10 @@ class CustomGmailToolSpec( GmailToolSpec ):
     def __init__( self, user_file = None ):
         self.user_file = user_file
         self.spec_functions.remove( "load_data" )
+        self.spec_functions.remove( "search_messages" )
+        self.spec_functions.append( "search_email" )
 
-    def search_messages( self, query: str, max_results: Optional[ int ] = None ):
+    def search_email( self, query: str, max_results: Optional[ int ] = None ):
         """Searches the user's Gmail account using the specified query string."""
         return super().search_messages( query, max_results )
 
@@ -38,7 +40,6 @@ class CustomGoogleCalendarToolSpec( GoogleCalendarToolSpec ):
 
     def __init__( self, user_file = None ):
         self.user_file = user_file
-        self.spec_functions.remove( "load_data" )
 
     def _get_credentials( self ):
         if self.user_file is None:
@@ -56,7 +57,7 @@ transaction_history = [
     { "date": "1/22/24", "amount": "$127.37", "location": "Best Buy", "category": "technology" },
 ]
 
-weather = [ { "temp": "72", "condition": "sunny" }, { "temp": "48", "condition": "snowy" }, { "temp": "80", "condition": "raining" } ]
+weather = [ { "temp": "49", "condition": "sunny" } ] # [ { "temp": "72", "condition": "sunny" }, { "temp": "48", "condition": "snowy" }, { "temp": "80", "condition": "raining" } ]
 
 def make_tool( fn, name, description ) -> FunctionTool:
     return FunctionTool.from_defaults( fn = fn, name = name, description = description )

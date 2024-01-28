@@ -18,12 +18,13 @@ from llama_index.llms import OpenAI
 from llama_index.node_parser import TextSplitter, SentenceSplitter
 from llama_index.tools.tool_spec.load_and_search import LoadAndSearchToolSpec
 from starlette.responses import StreamingResponse
+from starlette.staticfiles import StaticFiles
 
 from custom_tools import CustomGmailToolSpec, CustomGoogleCalendarToolSpec, date_tool, time_tool, bank_tool, \
     reminder_tool, remember_tool, play_music_tool, set_setting_tool, get_location_tool, get_weather_tool
 from get_token_json import authorize_google
 
-dumb = True
+dumb = False
 
 def load_api_keys():
     global api_keys
@@ -51,12 +52,13 @@ authorize_google()
 
 gmail = CustomGmailToolSpec()
 calendar = CustomGoogleCalendarToolSpec()
-tools = [ gmail, calendar ]
+tools = [ calendar, gmail ]
 # tools = [ tool for tool_list in tools for tool in tool_list.to_tool_list() ]
 # tools = [ LoadAndSearchToolSpec.from_defaults( tool_list ).to_tool_list() for tool_spec in tools for tool_list in
 #           tool_spec.to_tool_list() ]
 tools = [ tool for sublist in tools for tool in sublist.to_tool_list() ]
-las_tools = [ "search_messages" ]
+tools += [ date_tool, time_tool, bank_tool, reminder_tool, remember_tool, play_music_tool, set_setting_tool, get_location_tool, get_weather_tool ]
+las_tools = [ "search_email" ]
 skip_tools = [ "create_event" ]
 new_tools = []
 for tool in tools:
@@ -67,16 +69,17 @@ for tool in tools:
         search.metadata.description = f"Once data has been loaded from {load.metadata.name}, the result is stored in a vector database. " \
                                        "This database can be queried using this function. " \
                                        "The natural language query indicates what text should be retrieved."
+        # if name == "search_email":
+        #     search.metadata.description += " DO NOT use this tool when searching for events. Search the user's calendar instead."
         new_tools += [ load, search ]
     elif name not in skip_tools:
         new_tools.append( tool )
 tools = new_tools
-tools += [ date_tool, time_tool, bank_tool, reminder_tool, remember_tool, play_music_tool, set_setting_tool, get_location_tool, get_weather_tool ]
 
 app = FastAPI()
 
 @app.get( "/chat" )
-async def chat( message: str = Body(), google_user_file: str = Query(), chat_history: list[str] = Query( [] ) ):
+async def chat( message: str = Query(), google_user_file: str = Query(), chat_history: list[str] = Query( [] ) ):
     parsed_file = json.loads( google_user_file )
     gmail.user_file = parsed_file
     calendar.user_file = parsed_file
@@ -86,7 +89,15 @@ async def chat( message: str = Body(), google_user_file: str = Query(), chat_his
         parsed_chat_history.append( ChatMessage( role = MessageRole.USER if user else MessageRole.ASSISTANT, content = entry ) )
         user = not user
 
-    agent = ReActAgent.from_tools(
+    # agent = ReActAgent.from_tools(
+    #     tools,
+    #     llm = OpenAI(
+    #         model = "gpt-3.5-turbo" if dumb else "gpt-4-0125-preview",
+    #         system_prompt = "Act as a helpful assistant. You have extensive access to a variety of APIs to securely access personal information and more!"
+    #     ),
+    #     verbose = True
+    # )
+    agent = OpenAIAgent.from_tools(
         tools,
         llm = OpenAI(
             model = "gpt-3.5-turbo" if dumb else "gpt-4-0125-preview",
@@ -109,9 +120,11 @@ async def chat( message: str = Body(), google_user_file: str = Query(), chat_his
     # while output is None or not output.is_last:
     #     output = agent.run_step( task.task_id )
     # response = agent.finalize_response( task.task_id, output ).response
-    response = agent.chat( message, parsed_chat_history ).response
+    response = ( await agent.achat( message, parsed_chat_history ) ).response
     print( f"Human: {message}\nAssistant: {response}" )
     return response
+
+app.mount( "/", StaticFiles( directory = "." ), name = "static" )
 
 if __name__ == "__main__":
     import uvicorn

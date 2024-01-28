@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Warvis</title>
+    <link rel="stylesheet" href="hack.css">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<div class="bg"></div>
+<div class="star-field">
+    <div class="layer"></div>
+    <div class="layer"></div>
+    <div class="layer"></div>
+</div>
+
+<div class="container">
+    <h1>Welcome to Warvis</h1>
+    <input type="text" class="transparent-textbox" id="inputBox" placeholder="Say something to Warvis..."/>
+    <div class="outputBox"></div> <!-- Response box -->
+    <div id="loading-bar-spinner" class="spinner"><div class="spinner-icon"></div></div>
+</div>
+
+<script>
+    // Function to handle input and display output
+    async function processInput() {
+
+        // Get the input value
+        var input = document.getElementById('inputBox').value;
+        document.getElementById("loading-bar-spinner").style.left = "50%"
+        document.querySelector('.outputBox').innerText = "Loading...";
+
+        message = encodeURIComponent(input);
+        var response = await fetch( "/chat?message="+message+"&google_user_file=%7B%22token%22%3A%20%22ya29.a0AfB_byDCrMGo-y5LxAbcoFR-VgC85MaLifj6V2-g7A_SWcSyyTcke73ZeE3IF4KpmS6c0Pmu9yHCWFBAhowOmv3xubOrj8A5c7OjB9gZ9p_AyvbRw3Iit5CzO9TE3R7CGiJMVq2bXyS04zfQyBsbjjE-XfO7lDjyXnE3aCgYKASESAQ4SFQHGX2MivmDZyR7MwP4Qg4XD5PS-3A0171%22%2C%20%22refresh_token%22%3A%20%221%2F%2F0flnRR4eyc3BdCgYIARAAGA8SNwF-L9IrhzGAIw89AmhLorjxRaTS4w6RhNOAc3PLW4aHK3r5Dv2L0lZuBHvGogZIiCDVWVw3_F0%22%2C%20%22token_uri%22%3A%20%22https%3A%2F%2Foauth2.googleapis.com%2Ftoken%22%2C%20%22client_id%22%3A%20%2241098689972-ga1pactc1udgsa93ikntit74rbn6lhuf.apps.googleusercontent.com%22%2C%20%22client_secret%22%3A%20%22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%22%2C%20%22scopes%22%3A%20%5B%22https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.compose%22%2C%20%22https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly%22%2C%20%22https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar%22%5D%2C%20%22universe_domain%22%3A%20%22googleapis.com%22%2C%20%22account%22%3A%20%22%22%2C%20%22expiry%22%3A%20%222024-01-28T04%3A48%3A12.247192Z%22%7D", {
+            method: "GET",
+            headers: {
+                "Content-Type": "raw"
+            }
+        } )
+        document.getElementById("loading-bar-spinner").style.left = "5000%";
+
+        // Display the output in the output box
+        document.querySelector('.outputBox').innerHTML = marked.parse( await response.text() ).replace(/\n/g, "<br/>");
+    }
+
+    // Event listener for handling input
+    // document.getElementById('inputBox').addEventListener('input', processInput);
+
+    // Event listener for Enter key press
+    document.getElementById('inputBox').addEventListener('keydown', function (event) {
+        if (event.key === "Enter") {
+            processInput();
+        }
+    });
+</script>
+</body>
+</html>
